@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Calculadora de Triángulos PRO</title>
+<style>
+body{font-family:Arial;background:linear-gradient(135deg,#74ebd5,#acb6e5);text-align:center}
+.container{background:#fff;padding:20px;border-radius:15px;width:500px;margin:auto;margin-top:20px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
+input{margin:5px;padding:8px;width:70px;text-align:center}
+button{margin:10px;padding:10px;border:none;border-radius:8px;cursor:pointer;font-weight:bold}
+.calc{background:#28a745;color:white}.reset{background:#dc3545;color:white}
+canvas{border:1px solid #ccc;margin-top:15px}.result-box{background:#f8f9fa;padding:10px;border-radius:10px;min-height:100px}
+</style>
+</head>
+<body>
+<div class='container'>
+<h2>Calculadora de Triángulos</h2>
+<p><b>Alumno:</b> Jesus Uriel Bolivar</p>
+<h3>Lados</h3>
+<input id='a' placeholder='a'><input id='b' placeholder='b'><input id='c' placeholder='c'>
+<h3>Ángulos (°)</h3>
+<input id='A' placeholder='A'><input id='B' placeholder='B'><input id='C' placeholder='C'><br>
+<button class='calc' onclick='calcular()'>Calcular</button>
+<button class='reset' onclick='resetear()'>Restablecer</button>
+<h3>Resultados</h3><div class='result-box' id='resultado'></div>
+<canvas id='triangulo' width='350' height='300'></canvas>
+</div>
+<script>
+const ids=['a','b','c','A','B','C'];
+const resultado=document.getElementById('resultado');
+const triangulo=document.getElementById('triangulo');
+function val(id){return parseFloat(document.getElementById(id).value)}
+function calcular(){
+let a=val('a'),b=val('b'),c=val('c'),A=val('A'),B=val('B'),C=val('C');
+let datos=[a,b,c,A,B,C].filter(x=>!isNaN(x));
+let lados=[a,b,c].filter(x=>!isNaN(x));
+if(datos.length!==3){resultado.innerHTML='❌ Ingrese exactamente 3 datos';return;}
+if(lados.length<1){resultado.innerHTML='❌ Debe ingresar al menos un lado';return;}
+if(lados.some(x=>x<=0)){resultado.innerHTML='❌ Cada lado debe ser mayor que cero';return;}
+
+if(A&&B&&!C)C=180-A-B;
+if(A&&C&&!B)B=180-A-C;
+if(B&&C&&!A)A=180-B-C;
+if(A+B+C>180){resultado.innerHTML='❌ La suma de ángulos excede 180°';return;}
+
+let soluciones=[];
+
+if(a&&b&&A&&!B){
+let senB=(b*Math.sin(A*Math.PI/180))/a;
+if(senB>1){resultado.innerHTML='❌ Triángulo no posible';return;}
+let B1=Math.asin(senB)*180/Math.PI;
+let B2=180-B1;
+if(B1+A<180){let C1=180-A-B1;let c1=(a*Math.sin(C1*Math.PI/180))/Math.sin(A*Math.PI/180);soluciones.push({a,b,c:c1,A,B:B1,C:C1});}
+if(B2!==B1 && B2+A<180){let C2=180-A-B2;let c2=(a*Math.sin(C2*Math.PI/180))/Math.sin(A*Math.PI/180);soluciones.push({a,b,c:c2,A,B:B2,C:C2});}
+if(soluciones.length===0){resultado.innerHTML='❌ Sin solución';return;}
+}
+else{
+if(A&&a&&B&&!b)b=a*Math.sin(B*Math.PI/180)/Math.sin(A*Math.PI/180);
+if(A&&a&&C&&!c)c=a*Math.sin(C*Math.PI/180)/Math.sin(A*Math.PI/180);
+if(a&&b&&C&&!c)c=Math.sqrt(a*a+b*b-2*a*b*Math.cos(C*Math.PI/180));
+if(a&&c&&B&&!b)b=Math.sqrt(a*a+c*c-2*a*c*Math.cos(B*Math.PI/180));
+if(b&&c&&A&&!a)a=Math.sqrt(b*b+c*c-2*b*c*Math.cos(A*Math.PI/180));
+if(a&&b&&c){if(a+b<=c||a+c<=b||b+c<=a){resultado.innerHTML='❌ Triángulo no posible';return;}
+A=Math.acos((b*b+c*c-a*a)/(2*b*c))*180/Math.PI;
+B=Math.acos((a*a+c*c-b*b)/(2*a*c))*180/Math.PI;
+C=180-A-B;}
+soluciones.push({a,b,c,A,B,C});}
+
+mostrar(soluciones)
+}
+
+function mostrar(sol){
+resultado.innerHTML='';
+sol.forEach((s,i)=>{resultado.innerHTML+=`<b>Solución ${i+1}</b><br>Lados: a=${s.a.toFixed(2)}, b=${s.b.toFixed(2)}, c=${s.c.toFixed(2)}<br>Ángulos: A=${s.A.toFixed(2)}°, B=${s.B.toFixed(2)}°, C=${s.C.toFixed(2)}°<br><br>`;});
+dibujar(sol[0].a,sol[0].b,sol[0].c)
+}
+
+function dibujar(a,b,c){let ctx=triangulo.getContext('2d');ctx.clearRect(0,0,350,300);let scale=220/Math.max(a,b,c);a*=scale;b*=scale;c*=scale;let Ax=50,Ay=250,Bx=Ax+c,By=Ay;let ang=Math.acos((b*b+c*c-a*a)/(2*b*c));let Cx=Ax+b*Math.cos(ang),Cy=Ay-b*Math.sin(ang);ctx.beginPath();ctx.moveTo(Ax,Ay);ctx.lineTo(Bx,By);ctx.lineTo(Cx,Cy);ctx.closePath();ctx.stroke();ctx.fillText('A',Ax-10,Ay+10);ctx.fillText('B',Bx+5,By+10);ctx.fillText('C',Cx,Cy-5)}
+function resetear(){ids.forEach(id=>document.getElementById(id).value='');resultado.innerHTML='';triangulo.getContext('2d').clearRect(0,0,350,300)}
+</script>
+</body>
+</html>
